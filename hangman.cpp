@@ -1,4 +1,6 @@
 #include <iostream>
+#include <termios.h>
+#include <unistd.h>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -58,12 +60,28 @@ void print_guess(vector<string> &guess)
     cout << endl << endl;
 }
 
-int main(int argc, char *argv[])
+string get_word()
 {
+    termios disable;
+    tcgetattr(STDIN_FILENO, &disable);
+    disable.c_lflag &= ~ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &disable);
+
     cout << ">> ";
     string word;
     cin >> word;
 
+    termios enable;
+    tcgetattr(STDIN_FILENO, &enable);
+    enable.c_lflag |= ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &enable);
+
+    return word;
+}
+
+int main(int argc, char *argv[])
+{
+    string word = get_word();
     vector<string> guess(word.length());
     char first = word[0];
     guess[0].append("  ");
@@ -132,6 +150,7 @@ int main(int argc, char *argv[])
         {
             print_hangman(try_num);
             cout << endl;
+            cout << "	---ANSWER >> " << word << "---" << endl;
             return 0;
         }
         else
